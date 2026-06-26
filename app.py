@@ -13,7 +13,7 @@ st.set_page_config(
 # ── Load data ─────────────────────────────────────────────────
 @st.cache_data
 def load_data():
-    df = pd.read_csv('/Users/sid/Desktop/worldcup-project/archive/results.csv')
+    df = pd.read_csv('results.csv')
     wc = df[df['tournament'] == 'FIFA World Cup'].copy()
     wc['date'] = pd.to_datetime(wc['date'])
     wc['year'] = wc['date'].dt.year

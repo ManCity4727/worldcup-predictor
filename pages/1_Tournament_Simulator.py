@@ -21,7 +21,7 @@ flag_map = {
     'Austria': '🇦🇹', 'South Korea': '🇰🇷', 'Australia': '🇦🇺',
     'Algeria': '🇩🇿', 'Egypt': '🇪🇬', 'Canada': '🇨🇦',
     'Norway': '🇳🇴', 'Ivory Coast': '🇨🇮', 'Panama': '🇵🇦',
-    'Sweden': '🇸🇪', 'Czechia': '🇨🇿', 'Paraguay': '🇵🇾',
+    'Sweden': '🇸🇪', 'Czech Republic': '🇨🇿', 'Paraguay': '🇵🇾',
     'Scotland': '🏴󠁧󠁢󠁳󠁣󠁴󠁿', 'Tunisia': '🇹🇳', 'DR Congo': '🇨🇩',
     'Uzbekistan': '🇺🇿', 'Qatar': '🇶🇦', 'Iraq': '🇮🇶',
     'South Africa': '🇿🇦', 'Saudi Arabia': '🇸🇦', 'Jordan': '🇯🇴',
@@ -62,7 +62,7 @@ fifa_rankings = {
     'Japan': 18, 'Switzerland': 19, 'Iran': 20, 'Turkey': 22,
     'Ecuador': 23, 'Austria': 24, 'South Korea': 25, 'Australia': 27,
     'Algeria': 28, 'Egypt': 29, 'Canada': 30, 'Norway': 31,
-    'Ivory Coast': 33, 'Panama': 34, 'Sweden': 38, 'Czechia': 40,
+    'Ivory Coast': 33, 'Panama': 34, 'Sweden': 38, 'Czech Republic': 40,
     'Paraguay': 41, 'Scotland': 42, 'Tunisia': 45, 'DR Congo': 46,
     'Uzbekistan': 50, 'Qatar': 56, 'Iraq': 57, 'South Africa': 60,
     'Saudi Arabia': 61, 'Jordan': 63, 'Bosnia and Herzegovina': 64,
@@ -79,7 +79,7 @@ continent_map = {
     'Belgium': 'Europe', 'Croatia': 'Europe', 'Switzerland': 'Europe',
     'Denmark': 'Europe', 'Norway': 'Europe', 'Austria': 'Europe',
     'Sweden': 'Europe', 'Scotland': 'Europe', 'Turkey': 'Europe',
-    'Serbia': 'Europe', 'Czechia': 'Europe',
+    'Serbia': 'Europe', 'Czech Republic': 'Europe',
     'Bosnia and Herzegovina': 'Europe', 'Italy': 'Europe',
     'Morocco': 'Africa', 'Senegal': 'Africa', 'Ghana': 'Africa',
     'Cameroon': 'Africa', 'Ivory Coast': 'Africa', 'Tunisia': 'Africa',
@@ -121,7 +121,7 @@ squad_fatigue = {
 }
 
 groups = {
-    'A': ['Mexico', 'South Korea', 'Czechia', 'South Africa'],
+    'A': ['Mexico', 'South Korea', 'Czech Republic', 'South Africa'],
     'B': ['Switzerland', 'Canada', 'Bosnia and Herzegovina', 'Qatar'],
     'C': ['Brazil', 'Morocco', 'Scotland', 'Haiti'],
     'D': ['United States', 'Australia', 'Turkey', 'Paraguay'],

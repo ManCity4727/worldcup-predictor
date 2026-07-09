@@ -136,7 +136,6 @@ groups = {
     'K': ['England', 'Croatia', 'Panama', 'Ghana'],
     'L': ['Algeria', 'Austria', 'DR Congo', 'Uzbekistan'],
 }
-}
 
 # ── Model functions ───────────────────────────────────────────
 def get_lambda(team_a, team_b):

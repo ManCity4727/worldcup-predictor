@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import itertools
 from scipy.stats import poisson
 
 st.set_page_config(
@@ -95,8 +96,8 @@ continent_map = {
     'Saudi Arabia': 'Asia', 'Australia': 'Asia', 'Qatar': 'Asia',
     'Iraq': 'Asia', 'Jordan': 'Asia', 'Uzbekistan': 'Asia',
     'United States': 'CONCACAF', 'Mexico': 'CONCACAF',
-    'Canada': 'CONCACAF', 'Costa Rica': 'CONCACAF',
-    'Panama': 'CONCACAF', 'Haiti': 'CONCACAF', 'Curacao': 'CONCACAF',
+    'Canada': 'CONCACAF', 'Panama': 'CONCACAF',
+    'Haiti': 'CONCACAF', 'Curacao': 'CONCACAF',
     'New Zealand': 'Oceania',
 }
 
@@ -124,6 +125,21 @@ squad_fatigue = {
     'South Africa': 0.45, 'Iraq': 0.45, 'Qatar': 0.44,
     'Jordan': 0.44, 'New Zealand': 0.43, 'Scotland': 0.67,
     'Switzerland': 0.67,
+}
+
+groups = {
+    'A': ['Mexico', 'South Africa', 'South Korea', 'Czechia'],
+    'B': ['Canada', 'Switzerland', 'Bosnia and Herzegovina', 'Qatar'],
+    'C': ['United States', 'Paraguay', 'Australia', 'Turkey'],
+    'D': ['Germany', 'Curacao', 'Ivory Coast', 'Ecuador'],
+    'E': ['Netherlands', 'Japan', 'Sweden', 'Tunisia'],
+    'F': ['Brazil', 'Morocco', 'Scotland', 'Haiti'],
+    'G': ['Argentina', 'Jordan', 'Colombia', 'Portugal'],
+    'H': ['France', 'Norway', 'Uruguay', 'Senegal'],
+    'I': ['Spain', 'DR Congo', 'Algeria', 'Austria'],
+    'J': ['England', 'Panama', 'Croatia', 'Ghana'],
+    'K': ['Belgium', 'New Zealand', 'Cape Verde', 'Saudi Arabia'],
+    'L': ['Egypt', 'Iran', 'Uzbekistan', 'Iraq'],
 }
 
 # ── Model functions ───────────────────────────────────────────
@@ -172,7 +188,6 @@ def simulate_match(team_a, team_b):
 
     ga = poisson.rvs(la)
     gb = poisson.rvs(lb)
-
     corr = dixon_coles(ga, gb, la, lb)
     if np.random.random() > corr:
         ga = poisson.rvs(la)
@@ -196,146 +211,250 @@ def simulate_match(team_a, team_b):
                 return team_a
             return team_b
 
-def simulate_tournament(bracket, n):
-    all_teams = [t for match in bracket for t in match]
-    wins = {t: 0 for t in all_teams}
-    finals = {t: 0 for t in all_teams}
-    semis = {t: 0 for t in all_teams}
+def simulate_one_tournament(groups):
+    all_third_place = []
+    group_winners = {}
+    group_runners = {}
+
+    for group_name, teams in groups.items():
+        points = {team: 0 for team in teams}
+        gf = {team: 0 for team in teams}
+        ga = {team: 0 for team in teams}
+
+        for team_a, team_b in itertools.combinations(teams, 2):
+            la = get_lambda(team_a, team_b)
+            lb = get_lambda(team_b, team_a)
+            la *= get_continent_boost(team_a)
+            lb *= get_continent_boost(team_b)
+            la *= get_fatigue_mult(team_a)
+            lb *= get_fatigue_mult(team_b)
+            la = max(la, 0.1)
+            lb = max(lb, 0.1)
+
+            ga_goals = poisson.rvs(la)
+            gb_goals = poisson.rvs(lb)
+            corr = dixon_coles(ga_goals, gb_goals, la, lb)
+            if np.random.random() > corr:
+                ga_goals = poisson.rvs(la)
+                gb_goals = poisson.rvs(lb)
+
+            gf[team_a] += ga_goals
+            ga[team_a] += gb_goals
+            gf[team_b] += gb_goals
+            ga[team_b] += ga_goals
+
+            if ga_goals > gb_goals:
+                points[team_a] += 3
+            elif gb_goals > ga_goals:
+                points[team_b] += 3
+            else:
+                points[team_a] += 1
+                points[team_b] += 1
+
+        standings = sorted(teams, key=lambda t: (
+            points[t], gf[t] - ga[t], gf[t]
+        ), reverse=True)
+
+        group_winners[group_name] = standings[0]
+        group_runners[group_name] = standings[1]
+        all_third_place.append({
+            'team': standings[2],
+            'points': points[standings[2]],
+            'gd': gf[standings[2]] - ga[standings[2]],
+            'gf': gf[standings[2]],
+        })
+
+    all_third_place.sort(key=lambda x: (
+        x['points'], x['gd'], x['gf']
+    ), reverse=True)
+    best_thirds = [t['team'] for t in all_third_place[:8]]
+
+    wA = group_winners['A']; wB = group_winners['B']
+    wC = group_winners['C']; wD = group_winners['D']
+    wE = group_winners['E']; wF = group_winners['F']
+    wG = group_winners['G']; wH = group_winners['H']
+    wI = group_winners['I']; wJ = group_winners['J']
+    wK = group_winners['K']; wL = group_winners['L']
+
+    rA = group_runners['A']; rB = group_runners['B']
+    rC = group_runners['C']; rD = group_runners['D']
+    rF = group_runners['F']; rG = group_runners['G']
+    rH = group_runners['H']; rI = group_runners['I']
+    rJ = group_runners['J']; rK = group_runners['K']
+    rL = group_runners['L']
+
+    t = best_thirds
+
+    r32 = [
+        (rA, rB), (wF, rC), (wE, t[0]), (wC, rF),
+        (wH, t[1]), (t[2], rI), (wA, rD), (wD, rB),
+        (wK, rH), (wJ, t[3]), (wL, rJ), (wI, rJ),
+        (wB, t[4]), (wG, t[5]), (t[6], rG), (rK, rL),
+    ]
+
+    r32_w = [simulate_match(a, b) for a, b in r32]
+
+    r16 = [
+        (r32_w[0], r32_w[1]), (r32_w[2], r32_w[3]),
+        (r32_w[4], r32_w[5]), (r32_w[6], r32_w[7]),
+        (r32_w[8], r32_w[9]), (r32_w[10], r32_w[11]),
+        (r32_w[12], r32_w[13]), (r32_w[14], r32_w[15]),
+    ]
+    r16_w = [simulate_match(a, b) for a, b in r16]
+
+    qf = [
+        (r16_w[0], r16_w[1]), (r16_w[2], r16_w[3]),
+        (r16_w[4], r16_w[5]), (r16_w[6], r16_w[7]),
+    ]
+    qf_w = [simulate_match(a, b) for a, b in qf]
+
+    sf = [
+        (qf_w[0], qf_w[1]),
+        (qf_w[2], qf_w[3]),
+    ]
+    sf_w = [simulate_match(a, b) for a, b in sf]
+
+    champion = simulate_match(sf_w[0], sf_w[1])
+
+    return {
+        'r32_winners': r32_w,
+        'r16_winners': r16_w,
+        'qf_winners': qf_w,
+        'sf_winners': sf_w,
+        'champion': champion
+    }
+
+@st.cache_data
+def run_simulation(n):
+    all_teams = [t for group in groups.values() for t in group]
+    stage_counts = {team: {
+        'r32': 0, 'r16': 0, 'qf': 0,
+        'sf': 0, 'final': 0, 'winner': 0
+    } for team in all_teams}
 
     for _ in range(n):
-        # Quarterfinals
-        qf_winners = [simulate_match(a, b) for a, b in bracket]
-        for w in qf_winners:
-            semis[w] += 1
-
-        # Semifinals
-        sf1 = simulate_match(qf_winners[0], qf_winners[1])
-        sf2 = simulate_match(qf_winners[2], qf_winners[3])
-        finals[sf1] += 1
-        finals[sf2] += 1
-
-        # Final
-        champion = simulate_match(sf1, sf2)
-        wins[champion] += 1
+        result = simulate_one_tournament(groups)
+        for team in result['r32_winners']:
+            stage_counts[team]['r32'] += 1
+        for team in result['r16_winners']:
+            stage_counts[team]['r16'] += 1
+        for team in result['qf_winners']:
+            stage_counts[team]['qf'] += 1
+        for team in result['sf_winners']:
+            stage_counts[team]['sf'] += 1
+        for team in result['sf_winners']:
+            stage_counts[team]['final'] += 1
+        stage_counts[result['champion']]['winner'] += 1
 
     results = []
     for team in all_teams:
+        c = stage_counts[team]
         results.append({
             'team': team,
             'flag': get_flag(team),
             'rank': fifa_rankings.get(team, 99),
-            'win_pct': round(wins[team]/n*100, 1),
-            'final_pct': round(finals[team]/n*100, 1),
-            'semi_pct': round(semis[team]/n*100, 1),
+            'r32_pct': round(c['r32']/n*100, 1),
+            'r16_pct': round(c['r16']/n*100, 1),
+            'qf_pct': round(c['qf']/n*100, 1),
+            'sf_pct': round(c['sf']/n*100, 1),
+            'final_pct': round(c['final']/n*100, 1),
+            'win_pct': round(c['winner']/n*100, 1),
         })
+
     results.sort(key=lambda x: x['win_pct'], reverse=True)
     return results
 
 # ── UI ────────────────────────────────────────────────────────
 st.title("🏆 World Cup 2026 Tournament Simulator")
-st.caption("Simulates the remaining bracket thousands of "
-           "times to calculate each team's win probability")
+st.caption("Simulates the full tournament from group stage "
+           "to final using the official FIFA bracket structure")
 
 st.divider()
 
-# ── Bracket setup ─────────────────────────────────────────────
-st.subheader("⚙️ Set the quarterfinal bracket")
-st.caption("Update if results have changed")
+n_sims = st.select_slider(
+    "Number of simulations",
+    options=[1000, 5000, 10000],
+    value=5000
+)
 
-all_teams = sorted(fifa_rankings.keys())
+st.caption("⚠️ 10,000 simulations takes ~3 minutes. "
+           "Start with 1,000 for a quick preview.")
 
-col1, col2 = st.columns(2)
-with col1:
-    st.markdown("**Quarterfinal 1**")
-    qf1_a = st.selectbox("Team A", all_teams,
-                          index=all_teams.index('France'), key='qf1a')
-    qf1_b = st.selectbox("Team B", all_teams,
-                          index=all_teams.index('Morocco'), key='qf1b')
+if st.button("🔮 Simulate Full Tournament",
+             type="primary", use_container_width=True):
 
-    st.markdown("**Quarterfinal 2**")
-    qf2_a = st.selectbox("Team A", all_teams,
-                          index=all_teams.index('Spain'), key='qf2a')
-    qf2_b = st.selectbox("Team B", all_teams,
-                          index=all_teams.index('Belgium'), key='qf2b')
-
-with col2:
-    st.markdown("**Quarterfinal 3**")
-    qf3_a = st.selectbox("Team A", all_teams,
-                          index=all_teams.index('Norway'), key='qf3a')
-    qf3_b = st.selectbox("Team B", all_teams,
-                          index=all_teams.index('England'), key='qf3b')
-
-    st.markdown("**Quarterfinal 4**")
-    qf4_a = st.selectbox("Team A", all_teams,
-                          index=all_teams.index('Argentina'), key='qf4a')
-    qf4_b = st.selectbox("Team B", all_teams,
-                          index=all_teams.index('Switzerland'), key='qf4b')
-
-n_sims = st.select_slider("Simulations",
-    options=[1000, 5000, 10000, 50000], value=10000)
-
-if st.button("🔮 Simulate Tournament", type="primary",
-             use_container_width=True):
-
-    bracket = [
-        (qf1_a, qf1_b),
-        (qf2_a, qf2_b),
-        (qf3_a, qf3_b),
-        (qf4_a, qf4_b),
-    ]
-
-    with st.spinner(f"Simulating {n_sims:,} tournaments..."):
-        results = simulate_tournament(bracket, n_sims)
+    with st.spinner(f"Simulating {n_sims:,} World Cups... "
+                    f"this may take a few minutes"):
+        results = run_simulation(n_sims)
 
     st.divider()
-    st.subheader(f"Results — {n_sims:,} simulations")
 
-    # ── Winner podium ─────────────────────────────────────────
+    # ── Podium ────────────────────────────────────────────────
+    st.subheader("🏆 Most likely World Cup winners")
     top3 = results[:3]
-    p1, p2, p3 = st.columns(3)
-    with p1:
+    c1, c2, c3 = st.columns(3)
+    with c1:
         st.metric(
             f"🥇 {top3[0]['flag']} {top3[0]['team']}",
             f"{top3[0]['win_pct']}%",
-            "Most likely champion"
+            f"#{top3[0]['rank']} FIFA"
         )
-    with p2:
+    with c2:
         st.metric(
             f"🥈 {top3[1]['flag']} {top3[1]['team']}",
             f"{top3[1]['win_pct']}%",
-            "2nd most likely"
+            f"#{top3[1]['rank']} FIFA"
         )
-    with p3:
+    with c3:
         st.metric(
             f"🥉 {top3[2]['flag']} {top3[2]['team']}",
             f"{top3[2]['win_pct']}%",
-            "3rd most likely"
+            f"#{top3[2]['rank']} FIFA"
         )
 
     st.divider()
 
     # ── Full table ────────────────────────────────────────────
-    st.subheader("Full breakdown")
-    st.caption("Semi% = probability of reaching semifinal · "
-               "Final% = probability of reaching final · "
-               "Win% = probability of winning World Cup")
+    st.subheader("Full probability table — all 48 teams")
+    st.caption("R32 = Round of 32 · R16 = Round of 16 · "
+               "QF = Quarterfinal · SF = Semifinal")
 
-    for r in results:
-        c1, c2, c3, c4, c5 = st.columns([3, 2, 2, 2, 4])
-        with c1:
-            st.markdown(f"**{r['flag']} {r['team']}**")
-        with c2:
-            st.markdown(f"Semi: **{r['semi_pct']}%**")
-        with c3:
-            st.markdown(f"Final: **{r['final_pct']}%**")
-        with c4:
-            st.markdown(f"Win: **{r['win_pct']}%**")
-        with c5:
-            st.progress(r['win_pct'] / 25)
+    # Group by tier for readability
+    tiers = [
+        ("🔥 Top contenders", results[:8]),
+        ("⚡ Dark horses", results[8:20]),
+        ("🎲 Long shots", results[20:]),
+    ]
+
+    for tier_name, tier_teams in tiers:
+        st.markdown(f"**{tier_name}**")
+        for r in tier_teams:
+            c1, c2, c3, c4, c5, c6, c7 = st.columns(
+                [3, 1.5, 1.5, 1.5, 1.5, 1.5, 3])
+            with c1:
+                st.markdown(
+                    f"{r['flag']} **{r['team']}** "
+                    f"<span style='color:gray;font-size:12px'>"
+                    f"#{r['rank']}</span>",
+                    unsafe_allow_html=True)
+            with c2:
+                st.markdown(f"R32: **{r['r32_pct']}%**")
+            with c3:
+                st.markdown(f"R16: **{r['r16_pct']}%**")
+            with c4:
+                st.markdown(f"QF: **{r['qf_pct']}%**")
+            with c5:
+                st.markdown(f"SF: **{r['sf_pct']}%**")
+            with c6:
+                st.markdown(f"Win: **{r['win_pct']}%**")
+            with c7:
+                st.progress(r['win_pct'] / 15)
+        st.markdown("---")
 
     st.divider()
     st.caption(
         f"Model: Poisson + FIFA rankings + fatigue + "
         f"continent advantage + Dixon-Coles · "
+        f"Official FIFA 2026 bracket structure · "
         f"{n_sims:,} simulations"
     )

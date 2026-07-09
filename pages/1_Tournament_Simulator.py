@@ -26,7 +26,7 @@ flag_map = {
     'Uzbekistan': '🇺🇿', 'Qatar': '🇶🇦', 'Iraq': '🇮🇶',
     'South Africa': '🇿🇦', 'Saudi Arabia': '🇸🇦', 'Jordan': '🇯🇴',
     'Bosnia and Herzegovina': '🇧🇦', 'Cape Verde': '🇨🇻',
-    'Ghana': '🇬🇭', 'Curacao': '🇨🇼', 'Haiti': '🇭🇹',
+    'Ghana': '🇬🇭', 'Curaçao': '🇨🇼', 'Haiti': '🇭🇹',
     'New Zealand': '🇳🇿',
 }
 
@@ -66,7 +66,7 @@ fifa_rankings = {
     'Paraguay': 41, 'Scotland': 42, 'Tunisia': 45, 'DR Congo': 46,
     'Uzbekistan': 50, 'Qatar': 56, 'Iraq': 57, 'South Africa': 60,
     'Saudi Arabia': 61, 'Jordan': 63, 'Bosnia and Herzegovina': 64,
-    'Cape Verde': 67, 'Ghana': 73, 'Curacao': 82, 'Haiti': 83,
+    'Cape Verde': 67, 'Ghana': 73, 'Curaçao': 82, 'Haiti': 83,
     'New Zealand': 85
 }
 
@@ -90,7 +90,7 @@ continent_map = {
     'Iraq': 'Asia', 'Jordan': 'Asia', 'Uzbekistan': 'Asia',
     'United States': 'CONCACAF', 'Mexico': 'CONCACAF',
     'Canada': 'CONCACAF', 'Panama': 'CONCACAF',
-    'Haiti': 'CONCACAF', 'Curacao': 'CONCACAF',
+    'Haiti': 'CONCACAF', 'Curaçao': 'CONCACAF',
     'New Zealand': 'Oceania',
 }
 
@@ -114,7 +114,7 @@ squad_fatigue = {
     'Canada': 0.52, 'Cape Verde': 0.52, 'Egypt': 0.53,
     'Tunisia': 0.54, 'Paraguay': 0.50, 'United States': 0.50,
     'Panama': 0.49, 'DR Congo': 0.49, 'Iran': 0.48,
-    'Curacao': 0.48, 'Saudi Arabia': 0.46, 'Haiti': 0.46,
+    'Curaçao': 0.48, 'Saudi Arabia': 0.46, 'Haiti': 0.46,
     'South Africa': 0.45, 'Iraq': 0.45, 'Qatar': 0.44,
     'Jordan': 0.44, 'New Zealand': 0.43, 'Scotland': 0.67,
     'Switzerland': 0.67,
@@ -125,7 +125,7 @@ groups = {
     'B': ['Switzerland', 'Canada', 'Bosnia and Herzegovina', 'Qatar'],
     'C': ['Brazil', 'Morocco', 'Scotland', 'Haiti'],
     'D': ['United States', 'Australia', 'Turkey', 'Paraguay'],
-    'E': ['Germany', 'Ivory Coast', 'Ecuador', 'Curacao'],
+    'E': ['Germany', 'Ivory Coast', 'Ecuador', 'Curaçao'],
     'F': ['Netherlands', 'Japan', 'Sweden', 'Tunisia'],
     'G': ['Belgium', 'Egypt', 'Iran', 'New Zealand'],
     'H': ['Spain', 'Uruguay', 'Cape Verde', 'Saudi Arabia'],

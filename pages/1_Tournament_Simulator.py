@@ -123,18 +123,19 @@ squad_fatigue = {
 }
 
 groups = {
-    'A': ['Mexico', 'South Africa', 'South Korea', 'Czechia'],
-    'B': ['Canada', 'Switzerland', 'Bosnia and Herzegovina', 'Qatar'],
-    'C': ['United States', 'Paraguay', 'Australia', 'Turkey'],
-    'D': ['Germany', 'Curacao', 'Ivory Coast', 'Ecuador'],
-    'E': ['Netherlands', 'Japan', 'Sweden', 'Tunisia'],
-    'F': ['Brazil', 'Morocco', 'Scotland', 'Haiti'],
-    'G': ['Argentina', 'Jordan', 'Colombia', 'Portugal'],
-    'H': ['France', 'Norway', 'Uruguay', 'Senegal'],
-    'I': ['Spain', 'DR Congo', 'Algeria', 'Austria'],
-    'J': ['England', 'Panama', 'Croatia', 'Ghana'],
-    'K': ['Belgium', 'New Zealand', 'Cape Verde', 'Saudi Arabia'],
-    'L': ['Egypt', 'Iran', 'Uzbekistan', 'Iraq'],
+    'A': ['Mexico', 'South Korea', 'Czechia', 'South Africa'],
+    'B': ['Switzerland', 'Canada', 'Bosnia and Herzegovina', 'Qatar'],
+    'C': ['Brazil', 'Morocco', 'Scotland', 'Haiti'],
+    'D': ['United States', 'Australia', 'Turkey', 'Paraguay'],
+    'E': ['Germany', 'Ivory Coast', 'Ecuador', 'Curacao'],
+    'F': ['Netherlands', 'Japan', 'Sweden', 'Tunisia'],
+    'G': ['Belgium', 'Egypt', 'Iran', 'New Zealand'],
+    'H': ['Spain', 'Uruguay', 'Cape Verde', 'Saudi Arabia'],
+    'I': ['France', 'Norway', 'Senegal', 'Iraq'],
+    'J': ['Argentina', 'Colombia', 'Portugal', 'Jordan'],
+    'K': ['England', 'Croatia', 'Panama', 'Ghana'],
+    'L': ['Algeria', 'Austria', 'DR Congo', 'Uzbekistan'],
+}
 }
 
 # ── Model functions ───────────────────────────────────────────

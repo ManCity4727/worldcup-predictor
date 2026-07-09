@@ -10,11 +10,36 @@ st.set_page_config(
     layout="wide"
 )
 
+# ── Flag emoji lookup ─────────────────────────────────────────
+flag_map = {
+    'Argentina': '🇦🇷', 'Spain': '🇪🇸', 'France': '🇫🇷',
+    'England': '🏴󠁧󠁢󠁥󠁮󠁧󠁿', 'Portugal': '🇵🇹', 'Brazil': '🇧🇷',
+    'Morocco': '🇲🇦', 'Netherlands': '🇳🇱', 'Belgium': '🇧🇪',
+    'Germany': '🇩🇪', 'Croatia': '🇭🇷', 'Colombia': '🇨🇴',
+    'Mexico': '🇲🇽', 'Senegal': '🇸🇳', 'Uruguay': '🇺🇾',
+    'United States': '🇺🇸', 'Japan': '🇯🇵', 'Switzerland': '🇨🇭',
+    'Iran': '🇮🇷', 'Turkey': '🇹🇷', 'Ecuador': '🇪🇨',
+    'Austria': '🇦🇹', 'South Korea': '🇰🇷', 'Australia': '🇦🇺',
+    'Algeria': '🇩🇿', 'Egypt': '🇪🇬', 'Canada': '🇨🇦',
+    'Norway': '🇳🇴', 'Ivory Coast': '🇨🇮', 'Panama': '🇵🇦',
+    'Sweden': '🇸🇪', 'Czechia': '🇨🇿', 'Paraguay': '🇵🇾',
+    'Scotland': '🏴󠁧󠁢󠁳󠁣󠁴󠁿', 'Tunisia': '🇹🇳', 'DR Congo': '🇨🇩',
+    'Uzbekistan': '🇺🇿', 'Qatar': '🇶🇦', 'Iraq': '🇮🇶',
+    'South Africa': '🇿🇦', 'Saudi Arabia': '🇸🇦', 'Jordan': '🇯🇴',
+    'Bosnia and Herzegovina': '🇧🇦', 'Cape Verde': '🇨🇻',
+    'Ghana': '🇬🇭', 'Curacao': '🇨🇼', 'Haiti': '🇭🇹',
+    'New Zealand': '🇳🇿',
+}
+
+def get_flag(team):
+    return flag_map.get(team, '🏳️')
+
 # ── Load data ─────────────────────────────────────────────────
 @st.cache_data
 def load_data():
     df = pd.read_csv('results.csv')
     wc = df[df['tournament'] == 'FIFA World Cup'].copy()
+    wc = wc.dropna(subset=['home_score', 'away_score'])
     wc['date'] = pd.to_datetime(wc['date'])
     wc['year'] = wc['date'].dt.year
 
@@ -142,20 +167,16 @@ def dixon_coles(g_a, g_b, la, lb, rho=0.1):
 
 def simulate(team_a, team_b, n, injury_a, injury_b,
              use_continent, use_fatigue, knockout):
-
     la = get_lambda(team_a, team_b)
     lb = get_lambda(team_b, team_a)
-
     if use_continent:
         la *= get_continent_boost(team_a)
         lb *= get_continent_boost(team_b)
     if use_fatigue:
         la *= get_fatigue_mult(team_a)
         lb *= get_fatigue_mult(team_b)
-
     la *= (1 - injury_a / 100)
     lb *= (1 - injury_b / 100)
-
     la = max(la, 0.1)
     lb = max(lb, 0.1)
 
@@ -165,18 +186,14 @@ def simulate(team_a, team_b, n, injury_a, injury_b,
     for _ in range(n):
         ga = poisson.rvs(la)
         gb = poisson.rvs(lb)
-
         corr = dixon_coles(ga, gb, la, lb)
         if np.random.random() > corr:
             ga = poisson.rvs(la)
             gb = poisson.rvs(lb)
-
         if ga > gb:
-            wins_a += 1
-            d90 += 1
+            wins_a += 1; d90 += 1
         elif gb > ga:
-            wins_b += 1
-            d90 += 1
+            wins_b += 1; d90 += 1
         else:
             if knockout:
                 eta = poisson.rvs(la * 0.33)
@@ -203,34 +220,32 @@ def simulate(team_a, team_b, n, injury_a, injury_b,
         'd90': d90/n*100, 'det': det/n*100, 'dpens': dpens/n*100
     }
 
-def predict_scoreline(team_a, team_b, use_continent, use_fatigue, max_goals=6):
-    """
-    Calculate probability matrix for all scorelines.
-    Returns top 5 most likely scorelines.
-    """
+def predict_scoreline(team_a, team_b, use_continent,
+                      use_fatigue, injury_a=0, injury_b=0,
+                      max_goals=6):
     la = get_lambda(team_a, team_b)
     lb = get_lambda(team_b, team_a)
-
     if use_continent:
         la *= get_continent_boost(team_a)
         lb *= get_continent_boost(team_b)
     if use_fatigue:
         la *= get_fatigue_mult(team_a)
         lb *= get_fatigue_mult(team_b)
-
+    la *= (1 - injury_a / 100)
+    lb *= (1 - injury_b / 100)
     la = max(la, 0.1)
     lb = max(lb, 0.1)
 
     scorelines = []
     for i in range(max_goals + 1):
         for j in range(max_goals + 1):
-            p = (poisson.pmf(i, la) * poisson.pmf(j, lb))
+            p = poisson.pmf(i, la) * poisson.pmf(j, lb)
             if i > j:
-                result = f"{team_a} win"
+                result = f"{get_flag(team_a)} {team_a} win"
             elif j > i:
-                result = f"{team_b} win"
+                result = f"{get_flag(team_b)} {team_b} win"
             else:
-                result = "Draw"
+                result = "🤝 Draw"
             scorelines.append({
                 'score': f"{i} - {j}",
                 'probability': round(p * 100, 1),
@@ -238,29 +253,26 @@ def predict_scoreline(team_a, team_b, use_continent, use_fatigue, max_goals=6):
             })
 
     scorelines.sort(key=lambda x: x['probability'], reverse=True)
-    return scorelines[:5], round(la, 3), round(lb, 3)
-
+    return scorelines[:5]
 
 # ── UI ────────────────────────────────────────────────────────
 st.title("⚽ World Cup 2026 Match Predictor")
-st.caption("Poisson model · FIFA rankings · Fatigue · Continent advantage · Dixon-Coles")
+st.caption("Poisson model · FIFA rankings · Fatigue · "
+           "Continent advantage · Dixon-Coles")
 
 teams = sorted(fifa_rankings.keys())
 
-# ── Sidebar controls ──────────────────────────────────────────
+# ── Sidebar ───────────────────────────────────────────────────
 with st.sidebar:
     st.header("⚙️ Model settings")
-
     knockout = st.toggle("Knockout mode", value=True,
-        help="Enables extra time and penalties — no draws")
+        help="Enables extra time and penalties")
     use_continent = st.toggle("Continent advantage", value=True,
         help="CONCACAF teams get +11% boost at 2026 WC")
     use_fatigue = st.toggle("Squad fatigue", value=True,
         help="Penalizes heavily used squads")
     n_sims = st.select_slider("Simulations",
-        options=[1000, 5000, 10000, 50000],
-        value=10000)
-
+        options=[1000, 5000, 10000, 50000], value=10000)
     st.divider()
     st.header("🩹 Injury impact")
     st.caption("Reduce a team's attack due to key injuries")
@@ -271,16 +283,16 @@ with st.sidebar:
 col1, col2, col3 = st.columns([2, 1, 2])
 with col1:
     team_a = st.selectbox("Team A", teams,
-                          index=teams.index('Brazil'))
+                          index=teams.index('France'))
 with col2:
-    st.markdown("<h3 style='text-align:center; "
+    st.markdown("<h3 style='text-align:center;"
                 "padding-top:28px;'>vs</h3>",
                 unsafe_allow_html=True)
 with col3:
     team_b = st.selectbox("Team B", teams,
-                          index=teams.index('Netherlands'))
+                          index=teams.index('Morocco'))
 
-# ── Run simulation ────────────────────────────────────────────
+# ── Run ───────────────────────────────────────────────────────
 if st.button("🔮 Run prediction", type="primary",
              use_container_width=True):
 
@@ -290,56 +302,76 @@ if st.button("🔮 Run prediction", type="primary",
                      use_continent, use_fatigue, knockout)
 
     st.divider()
-
-    # ── Results ───────────────────────────────────────────────
+    fa = get_flag(team_a)
+    fb = get_flag(team_b)
     ra = fifa_rankings.get(team_a, '?')
     rb = fifa_rankings.get(team_b, '?')
-    fa = squad_fatigue.get(team_a, 0.60)
-    fb = squad_fatigue.get(team_b, 0.60)
 
     st.subheader("Prediction results")
 
     if knockout:
         c1, c2 = st.columns(2)
         with c1:
-            st.metric(f"🏆 {team_a} advances",
+            st.metric(f"🏆 {fa} {team_a} advances",
                       f"{r['wins_a']:.1f}%")
         with c2:
-            st.metric(f"🏆 {team_b} advances",
+            st.metric(f"🏆 {fb} {team_b} advances",
                       f"{r['wins_b']:.1f}%")
     else:
         c1, c2, c3 = st.columns(3)
         with c1:
-            st.metric(f"🏆 {team_a} wins", f"{r['wins_a']:.1f}%")
+            st.metric(f"{fa} {team_a} wins",
+                      f"{r['wins_a']:.1f}%")
         with c2:
             st.metric("🤝 Draw", f"{r['draws']:.1f}%")
         with c3:
-            st.metric(f"🏆 {team_b} wins", f"{r['wins_b']:.1f}%")
+            st.metric(f"{fb} {team_b} wins",
+                      f"{r['wins_b']:.1f}%")
 
-    # ── Progress bars ─────────────────────────────────────────
     st.progress(r['wins_a'] / 100)
+
+    # ── Scoreline predictor ───────────────────────────────────
+    st.divider()
+    st.subheader("🎯 Most likely scorelines")
+    scorelines = predict_scoreline(
+        team_a, team_b, use_continent, use_fatigue,
+        injury_a, injury_b)
+
+    for s in scorelines:
+        c1, c2, c3 = st.columns([2, 4, 2])
+        with c1:
+            st.markdown(f"**{s['score']}**")
+        with c2:
+            st.markdown(s['result'])
+        with c3:
+            st.markdown(f"**{s['probability']}%**")
+        st.progress(s['probability'] / 30)
 
     # ── Team details ──────────────────────────────────────────
     st.divider()
     st.subheader("Team details")
     d1, d2 = st.columns(2)
     with d1:
-        st.markdown(f"**{team_a}**")
+        st.markdown(f"**{fa} {team_a}**")
         st.write(f"FIFA rank: #{ra}")
         st.write(f"Expected goals: {r['la']}")
-        st.write(f"Squad fatigue: {fa:.2f}")
+        st.write(f"Squad fatigue: "
+                 f"{squad_fatigue.get(team_a, 0.60):.2f}")
         if injury_a > 0:
             st.write(f"Injury penalty: -{injury_a}%")
-        if use_continent and continent_map.get(team_a) == 'CONCACAF':
+        if use_continent and \
+           continent_map.get(team_a) == 'CONCACAF':
             st.write("🏠 Home continent boost: +11%")
     with d2:
-        st.markdown(f"**{team_b}**")
+        st.markdown(f"**{fb} {team_b}**")
         st.write(f"FIFA rank: #{rb}")
         st.write(f"Expected goals: {r['lb']}")
-        st.write(f"Squad fatigue: {fb:.2f}")
+        st.write(f"Squad fatigue: "
+                 f"{squad_fatigue.get(team_b, 0.60):.2f}")
         if injury_b > 0:
             st.write(f"Injury penalty: -{injury_b}%")
-        if use_continent and continent_map.get(team_b) == 'CONCACAF':
+        if use_continent and \
+           continent_map.get(team_b) == 'CONCACAF':
             st.write("🏠 Home continent boost: +11%")
 
     # ── How decided ───────────────────────────────────────────
@@ -354,42 +386,12 @@ if st.button("🔮 Run prediction", type="primary",
         with hc3:
             st.metric("Penalties", f"{r['dpens']:.1f}%")
 
-    # ── Model info ────────────────────────────────────────────
+    # ── Footer ────────────────────────────────────────────────
     st.divider()
     st.caption(
         f"Model: {n_sims:,} simulations · "
         f"Validated 54.8% on 2022 WC · "
-        f"Continent boost: {'on' if use_continent else 'off'} · "
+        f"Continent: {'on' if use_continent else 'off'} · "
         f"Fatigue: {'on' if use_fatigue else 'off'} · "
         f"Dixon-Coles: on"
     )
-
-# ── Scoreline predictor ───────────────────────────────────
-    st.divider()
-    st.subheader("🎯 Most likely scorelines")
-    
-    scorelines, la, lb = predict_scoreline(
-        team_a, team_b, use_continent, use_fatigue)
-    
-    st.caption(f"Based on λ {team_a}: {la}  |  {team_b}: {lb}")
-    
-    for i, s in enumerate(scorelines):
-        col_score, col_result, col_prob = st.columns([2, 3, 2])
-        
-        # Color based on result
-        if team_a in s['result']:
-            color = "🔵"
-        elif team_b in s['result']:
-            color = "🟢"
-        else:
-            color = "⚪"
-            
-        with col_score:
-            st.markdown(f"**{s['score']}**")
-        with col_result:
-            st.markdown(f"{color} {s['result']}")
-        with col_prob:
-            st.markdown(f"**{s['probability']}%**")
-        
-        # Progress bar
-        st.progress(s['probability'] / 100)

@@ -203,6 +203,44 @@ def simulate(team_a, team_b, n, injury_a, injury_b,
         'd90': d90/n*100, 'det': det/n*100, 'dpens': dpens/n*100
     }
 
+def predict_scoreline(team_a, team_b, use_continent, use_fatigue, max_goals=6):
+    """
+    Calculate probability matrix for all scorelines.
+    Returns top 5 most likely scorelines.
+    """
+    la = get_lambda(team_a, team_b)
+    lb = get_lambda(team_b, team_a)
+
+    if use_continent:
+        la *= get_continent_boost(team_a)
+        lb *= get_continent_boost(team_b)
+    if use_fatigue:
+        la *= get_fatigue_mult(team_a)
+        lb *= get_fatigue_mult(team_b)
+
+    la = max(la, 0.1)
+    lb = max(lb, 0.1)
+
+    scorelines = []
+    for i in range(max_goals + 1):
+        for j in range(max_goals + 1):
+            p = (poisson.pmf(i, la) * poisson.pmf(j, lb))
+            if i > j:
+                result = f"{team_a} win"
+            elif j > i:
+                result = f"{team_b} win"
+            else:
+                result = "Draw"
+            scorelines.append({
+                'score': f"{i} - {j}",
+                'probability': round(p * 100, 1),
+                'result': result
+            })
+
+    scorelines.sort(key=lambda x: x['probability'], reverse=True)
+    return scorelines[:5], round(la, 3), round(lb, 3)
+
+
 # ── UI ────────────────────────────────────────────────────────
 st.title("⚽ World Cup 2026 Match Predictor")
 st.caption("Poisson model · FIFA rankings · Fatigue · Continent advantage · Dixon-Coles")
@@ -325,3 +363,33 @@ if st.button("🔮 Run prediction", type="primary",
         f"Fatigue: {'on' if use_fatigue else 'off'} · "
         f"Dixon-Coles: on"
     )
+
+# ── Scoreline predictor ───────────────────────────────────
+    st.divider()
+    st.subheader("🎯 Most likely scorelines")
+    
+    scorelines, la, lb = predict_scoreline(
+        team_a, team_b, use_continent, use_fatigue)
+    
+    st.caption(f"Based on λ {team_a}: {la}  |  {team_b}: {lb}")
+    
+    for i, s in enumerate(scorelines):
+        col_score, col_result, col_prob = st.columns([2, 3, 2])
+        
+        # Color based on result
+        if team_a in s['result']:
+            color = "🔵"
+        elif team_b in s['result']:
+            color = "🟢"
+        else:
+            color = "⚪"
+            
+        with col_score:
+            st.markdown(f"**{s['score']}**")
+        with col_result:
+            st.markdown(f"{color} {s['result']}")
+        with col_prob:
+            st.markdown(f"**{s['probability']}%**")
+        
+        # Progress bar
+        st.progress(s['probability'] / 100)

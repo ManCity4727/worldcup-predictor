@@ -10,7 +10,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# ── Flag map ──────────────────────────────────────────────────
 flag_map = {
     'Argentina': '🇦🇷', 'Spain': '🇪🇸', 'France': '🇫🇷',
     'England': '🏴󠁧󠁢󠁥󠁮󠁧󠁿', 'Portugal': '🇵🇹', 'Brazil': '🇧🇷',
@@ -34,7 +33,6 @@ flag_map = {
 def get_flag(team):
     return flag_map.get(team, '🏳️')
 
-# ── Load data ─────────────────────────────────────────────────
 @st.cache_data
 def load_data():
     df = pd.read_csv('results.csv')
@@ -49,13 +47,13 @@ def load_data():
     defense = (home_defense + away_defense) / 2
     avg_goals = wc['home_score'].mean()
     team_stats = pd.DataFrame({
-        'attack': attack, 'defense': defense
+        'attack': attack,
+        'defense': defense
     }).dropna()
     return team_stats, avg_goals
 
 team_stats, avg_goals = load_data()
 
-# ── Data ──────────────────────────────────────────────────────
 fifa_rankings = {
     'Argentina': 1, 'Spain': 2, 'France': 3, 'England': 4,
     'Portugal': 5, 'Brazil': 6, 'Morocco': 7, 'Netherlands': 8,
@@ -137,7 +135,6 @@ groups = {
     'L': ['Algeria', 'Austria', 'DR Congo', 'Uzbekistan'],
 }
 
-# ── Model functions ───────────────────────────────────────────
 def get_lambda(team_a, team_b):
     if team_a in team_stats.index and team_b in team_stats.index:
         hist = (team_stats.loc[team_a, 'attack'] *
@@ -205,7 +202,6 @@ def simulate_match(team_a, team_b):
             return team_b, ga, gb
 
 def simulate_group(teams):
-    """Simulate a group and return full standings with stats."""
     points = {t: 0 for t in teams}
     gf = {t: 0 for t in teams}
     ga = {t: 0 for t in teams}
@@ -213,21 +209,18 @@ def simulate_group(teams):
     d = {t: 0 for t in teams}
     l = {t: 0 for t in teams}
     results = []
-
     for team_a, team_b in itertools.combinations(teams, 2):
         winner, ga_goals, gb_goals = simulate_match(team_a, team_b)
         gf[team_a] += ga_goals
         ga[team_a] += gb_goals
         gf[team_b] += gb_goals
         ga[team_b] += ga_goals
-
         results.append({
             'home': team_a,
             'away': team_b,
             'home_score': ga_goals,
             'away_score': gb_goals
         })
-
         if ga_goals > gb_goals:
             points[team_a] += 3
             w[team_a] += 1
@@ -241,11 +234,9 @@ def simulate_group(teams):
             points[team_b] += 1
             d[team_a] += 1
             d[team_b] += 1
-
     standings = sorted(teams, key=lambda t: (
         points[t], gf[t] - ga[t], gf[t]
     ), reverse=True)
-
     table = []
     for i, team in enumerate(standings):
         table.append({
@@ -259,19 +250,17 @@ def simulate_group(teams):
             'ga': ga[team],
             'gd': gf[team] - ga[team],
             'pts': points[team],
-            'advanced': i < 2
+            'advanced': i < 2,
+            'third_qualified': False,
         })
-
     return table, results, standings
 
 def simulate_full_tournament(groups):
-    """Simulate one complete tournament, return all data."""
     all_group_tables = {}
     all_group_results = {}
     all_third_place = []
     group_winners = {}
     group_runners = {}
-
     for group_name, teams in groups.items():
         table, results, standings = simulate_group(teams)
         all_group_tables[group_name] = table
@@ -279,84 +268,68 @@ def simulate_full_tournament(groups):
         group_winners[group_name] = standings[0]
         group_runners[group_name] = standings[1]
         third = standings[2]
-        third_pts = next(r['pts'] for r in table if r['team'] == third)
-        third_gd = next(r['gd'] for r in table if r['team'] == third)
-        third_gf = next(r['gf'] for r in table if r['team'] == third)
+        third_row = next(r for r in table if r['team'] == third)
         all_third_place.append({
             'team': third,
-            'points': third_pts,
-            'gd': third_gd,
-            'gf': third_gf,
+            'points': third_row['pts'],
+            'gd': third_row['gd'],
+            'gf': third_row['gf'],
             'group': group_name
         })
-
     all_third_place.sort(key=lambda x: (
         x['points'], x['gd'], x['gf']
     ), reverse=True)
     best_thirds = [t['team'] for t in all_third_place[:8]]
-
-    # Mark third place teams that advanced
     for group_name, table in all_group_tables.items():
-        third_team = next(
-            r['team'] for r in table if r['pos'] == 3)
-        if third_team in best_thirds:
-            for row in table:
-                if row['team'] == third_team:
-                    row['advanced'] = True
-                    row['third_qualified'] = True
-
-    wA=group_winners['A']; wB=group_winners['B']
-    wC=group_winners['C']; wD=group_winners['D']
-    wE=group_winners['E']; wF=group_winners['F']
-    wG=group_winners['G']; wH=group_winners['H']
-    wI=group_winners['I']; wJ=group_winners['J']
-    wK=group_winners['K']; wL=group_winners['L']
-    rA=group_runners['A']; rB=group_runners['B']
-    rC=group_runners['C']; rD=group_runners['D']
-    rF=group_runners['F']; rG=group_runners['G']
-    rH=group_runners['H']; rI=group_runners['I']
-    rJ=group_runners['J']; rK=group_runners['K']
-    rL=group_runners['L']
+        for row in table:
+            if row['pos'] == 3 and row['team'] in best_thirds:
+                row['third_qualified'] = True
+                row['advanced'] = True
+    wA = group_winners['A']; wB = group_winners['B']
+    wC = group_winners['C']; wD = group_winners['D']
+    wE = group_winners['E']; wF = group_winners['F']
+    wG = group_winners['G']; wH = group_winners['H']
+    wI = group_winners['I']; wJ = group_winners['J']
+    wK = group_winners['K']; wL = group_winners['L']
+    rA = group_runners['A']; rB = group_runners['B']
+    rC = group_runners['C']; rD = group_runners['D']
+    rF = group_runners['F']; rG = group_runners['G']
+    rH = group_runners['H']; rI = group_runners['I']
+    rJ = group_runners['J']; rK = group_runners['K']
+    rL = group_runners['L']
     t = best_thirds
-
     r32_matches = [
         (rA, rB), (wF, rC), (wE, t[0]), (wC, rF),
         (wH, t[1]), (t[2], rI), (wA, rD), (wD, rB),
         (wK, rH), (wJ, t[3]), (wL, rJ), (wI, rJ),
         (wB, t[4]), (wG, t[5]), (t[6], rG), (rK, rL),
     ]
-
     def play(a, b):
         winner, gs, gc = simulate_match(a, b)
         return winner, a, b, gs, gc
-
     r32 = [play(a, b) for a, b in r32_matches]
     r32_w = [r[0] for r in r32]
-
     r16_matches = [
-        (r32_w[0],r32_w[1]), (r32_w[2],r32_w[3]),
-        (r32_w[4],r32_w[5]), (r32_w[6],r32_w[7]),
-        (r32_w[8],r32_w[9]), (r32_w[10],r32_w[11]),
-        (r32_w[12],r32_w[13]), (r32_w[14],r32_w[15]),
+        (r32_w[0], r32_w[1]), (r32_w[2], r32_w[3]),
+        (r32_w[4], r32_w[5]), (r32_w[6], r32_w[7]),
+        (r32_w[8], r32_w[9]), (r32_w[10], r32_w[11]),
+        (r32_w[12], r32_w[13]), (r32_w[14], r32_w[15]),
     ]
     r16 = [play(a, b) for a, b in r16_matches]
     r16_w = [r[0] for r in r16]
-
     qf_matches = [
-        (r16_w[0],r16_w[1]), (r16_w[2],r16_w[3]),
-        (r16_w[4],r16_w[5]), (r16_w[6],r16_w[7]),
+        (r16_w[0], r16_w[1]), (r16_w[2], r16_w[3]),
+        (r16_w[4], r16_w[5]), (r16_w[6], r16_w[7]),
     ]
     qf = [play(a, b) for a, b in qf_matches]
     qf_w = [r[0] for r in qf]
-
     sf_matches = [
-        (qf_w[0],qf_w[1]), (qf_w[2],qf_w[3])
+        (qf_w[0], qf_w[1]),
+        (qf_w[2], qf_w[3]),
     ]
     sf = [play(a, b) for a, b in sf_matches]
     sf_w = [r[0] for r in sf]
-
     final_w, fa, fb, fgs, fgc = play(sf_w[0], sf_w[1])
-
     return {
         'group_tables': all_group_tables,
         'group_results': all_group_results,
@@ -380,7 +353,7 @@ col1, col2 = st.columns([2, 1])
 with col1:
     st.markdown("### Run a single simulation")
     st.caption("See one complete tournament play out with "
-               "group tables, results and full bracket")
+               "group tables, all match results and full bracket")
 with col2:
     simulate_btn = st.button(
         "🎲 Simulate One Tournament",
@@ -392,70 +365,63 @@ if simulate_btn:
     with st.spinner("Simulating tournament..."):
         sim = simulate_full_tournament(groups)
 
-    # ── Group stage tables ────────────────────────────────────
     st.divider()
     st.subheader("📊 Group Stage Results")
+    st.caption("🟢 Qualified · 🟡 Qualified as best 3rd · "
+               "🔴 Eliminated")
 
     group_names = list(groups.keys())
     for i in range(0, len(group_names), 3):
         row_groups = group_names[i:i+3]
         cols = st.columns(3)
-
         for col, gname in zip(cols, row_groups):
-    with col:
-        st.markdown(f"**Group {gname}**")
-        table = sim['group_tables'][gname]
+            with col:
+                st.markdown(f"**Group {gname}**")
+                table = sim['group_tables'][gname]
+                for row in table:
+                    if row.get('third_qualified'):
+                        badge = "🟡"
+                    elif row['advanced']:
+                        badge = "🟢"
+                    else:
+                        badge = "🔴"
+                    st.markdown(
+                        f"{badge} {row['flag']} **{row['team']}**  \n"
+                        f"Pts: {row['pts']} · "
+                        f"{row['w']}W {row['d']}D {row['l']}L · "
+                        f"GD {row['gd']:+d}"
+                    )
+                with st.expander("📋 Match results"):
+                    for result in sim['group_results'][gname]:
+                        home = result['home']
+                        away = result['away']
+                        hs = result['home_score']
+                        as_ = result['away_score']
+                        fh = get_flag(home)
+                        fa = get_flag(away)
+                        if hs > as_:
+                            st.markdown(
+                                f"**{fh} {home} {hs}**"
+                                f"–{as_} {fa} {away}"
+                            )
+                        elif as_ > hs:
+                            st.markdown(
+                                f"{fh} {home} {hs}"
+                                f"–**{as_} {fa} {away}**"
+                            )
+                        else:
+                            st.markdown(
+                                f"{fh} {home} "
+                                f"{hs}–{as_} {fa} {away}"
+                            )
 
-        for row in table:
-            if row.get('third_qualified'):
-                badge = "🟡"
-            elif row['advanced']:
-                badge = "🟢"
-            else:
-                badge = "🔴"
-            st.markdown(
-                f"{badge} {row['flag']} **{row['team']}** "
-                f"· {row['pts']}pts "
-                f"· {row['w']}W {row['d']}D {row['l']}L "
-                f"· GD {row['gd']:+d}",
-                unsafe_allow_html=False
-            )
-
-        with st.expander("📋 Match results"):
-            for result in sim['group_results'][gname]:
-                home = result['home']
-                away = result['away']
-                hs = result['home_score']
-                as_ = result['away_score']
-                fh = get_flag(home)
-                fa = get_flag(away)
-                if hs > as_:
-                    line = (f"**{fh} {home} {hs}**"
-                            f"–{as_} {fa} {away}")
-                elif as_ > hs:
-                    line = (f"{fh} {home} {hs}"
-                            f"–**{as_} {fa} {away}**")
-                else:
-                    line = (f"{fh} {home} "
-                            f"{hs}–{as_} {fa} {away}")
-                st.markdown(line)
-        st.markdown("")
-
-    st.caption("🟢 Qualified · 🟡 Qualified as best 3rd · "
-               "🔴 Eliminated")
-
-    # ── Best third place ──────────────────────────────────────
     st.divider()
     st.subheader("⭐ Best Third Place Teams")
     thirds_cols = st.columns(8)
     for i, team in enumerate(sim['best_thirds']):
         with thirds_cols[i]:
-            st.markdown(
-                f"**{get_flag(team)}**  \n{team}",
-                unsafe_allow_html=False
-            )
+            st.markdown(f"**{get_flag(team)}**  \n{team}")
 
-    # ── Knockout rounds ───────────────────────────────────────
     st.divider()
     st.subheader("🏆 Knockout Stage")
 
@@ -483,37 +449,23 @@ if simulate_btn:
     st.markdown("")
     show_round(sim['sf'], "Semifinals")
 
-    # ── Final ─────────────────────────────────────────────────
     st.divider()
     champion = sim['champion']
     _, fa, fb, fgs, fgc = sim['final']
-
     st.subheader("🏆 Final")
     c1, c2, c3 = st.columns([2, 1, 2])
     with c1:
-        st.markdown(
-            f"## {get_flag(fa)} {fa}",
-            unsafe_allow_html=False
-        )
+        st.markdown(f"## {get_flag(fa)} {fa}")
     with c2:
-        st.markdown(
-            f"## {fgs} – {fgc}",
-            unsafe_allow_html=False
-        )
+        st.markdown(f"## {fgs}–{fgc}")
     with c3:
-        st.markdown(
-            f"## {get_flag(fb)} {fb}",
-            unsafe_allow_html=False
-        )
-
+        st.markdown(f"## {get_flag(fb)} {fb}")
     st.success(
         f"🏆 {get_flag(champion)} **{champion}** "
         f"wins the 2026 World Cup!"
     )
 
 st.divider()
-
-# ── Multi simulation ──────────────────────────────────────────
 st.subheader("📈 Run multiple simulations")
 st.caption("Simulate thousands of tournaments to get "
            "win probabilities for every team")
@@ -526,11 +478,11 @@ n_sims = st.select_slider(
 
 if st.button("🔮 Calculate Win Probabilities",
              use_container_width=True):
-
     all_teams = [t for g in groups.values() for t in g]
-    counts = {t: {'r32':0,'r16':0,'qf':0,
-                  'sf':0,'final':0,'win':0}
-              for t in all_teams}
+    counts = {t: {
+        'r32': 0, 'r16': 0, 'qf': 0,
+        'sf': 0, 'final': 0, 'win': 0
+    } for t in all_teams}
 
     progress = st.progress(0)
     status = st.empty()
@@ -545,15 +497,12 @@ if st.button("🔮 Calculate Win Probabilities",
             counts[team]['qf'] += 1
         for team in [r[0] for r in result['sf']]:
             counts[team]['sf'] += 1
-        for team in result['best_thirds'][:2]:
-            pass
         _, fa, fb, _, _ = result['final']
         counts[fa]['final'] += 1
         counts[fb]['final'] += 1
         counts[result['champion']]['win'] += 1
-
-        if i % 100 == 0:
-            progress.progress((i+1)/n_sims)
+        if i % 50 == 0:
+            progress.progress((i + 1) / n_sims)
             status.text(f"Simulating... {i+1}/{n_sims}")
 
     progress.progress(1.0)
@@ -566,14 +515,13 @@ if st.button("🔮 Calculate Win Probabilities",
             'team': team,
             'flag': get_flag(team),
             'rank': fifa_rankings.get(team, 99),
-            'r32': round(c['r32']/n_sims*100, 1),
-            'r16': round(c['r16']/n_sims*100, 1),
-            'qf': round(c['qf']/n_sims*100, 1),
-            'sf': round(c['sf']/n_sims*100, 1),
-            'final': round(c['final']/n_sims*100, 1),
-            'win': round(c['win']/n_sims*100, 1),
+            'r32': round(c['r32'] / n_sims * 100, 1),
+            'r16': round(c['r16'] / n_sims * 100, 1),
+            'qf': round(c['qf'] / n_sims * 100, 1),
+            'sf': round(c['sf'] / n_sims * 100, 1),
+            'final': round(c['final'] / n_sims * 100, 1),
+            'win': round(c['win'] / n_sims * 100, 1),
         })
-
     results.sort(key=lambda x: x['win'], reverse=True)
 
     st.divider()
@@ -584,20 +532,25 @@ if st.button("🔮 Calculate Win Probabilities",
     with c1:
         st.metric(
             f"🥇 {top3[0]['flag']} {top3[0]['team']}",
-            f"{top3[0]['win']}%", "Most likely winner")
+            f"{top3[0]['win']}%",
+            "Most likely winner"
+        )
     with c2:
         st.metric(
             f"🥈 {top3[1]['flag']} {top3[1]['team']}",
-            f"{top3[1]['win']}%", "2nd most likely")
+            f"{top3[1]['win']}%",
+            "2nd most likely"
+        )
     with c3:
         st.metric(
             f"🥉 {top3[2]['flag']} {top3[2]['team']}",
-            f"{top3[2]['win']}%", "3rd most likely")
+            f"{top3[2]['win']}%",
+            "3rd most likely"
+        )
 
     st.divider()
     st.markdown("**Full probability table**")
-
-    header = st.columns([3,1.5,1.5,1.5,1.5,1.5,2])
+    header = st.columns([3, 1.5, 1.5, 1.5, 1.5, 1.5, 2])
     header[0].markdown("**Team**")
     header[1].markdown("**R32**")
     header[2].markdown("**R16**")
@@ -606,7 +559,7 @@ if st.button("🔮 Calculate Win Probabilities",
     header[5].markdown("**Win**")
 
     for r in results:
-        cols = st.columns([3,1.5,1.5,1.5,1.5,1.5,2])
+        cols = st.columns([3, 1.5, 1.5, 1.5, 1.5, 1.5, 2])
         cols[0].markdown(
             f"{r['flag']} **{r['team']}** "
             f"<span style='color:gray;font-size:11px'>"

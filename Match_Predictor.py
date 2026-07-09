@@ -22,12 +22,12 @@ flag_map = {
     'Austria': '🇦🇹', 'South Korea': '🇰🇷', 'Australia': '🇦🇺',
     'Algeria': '🇩🇿', 'Egypt': '🇪🇬', 'Canada': '🇨🇦',
     'Norway': '🇳🇴', 'Ivory Coast': '🇨🇮', 'Panama': '🇵🇦',
-    'Sweden': '🇸🇪', 'Czechia': '🇨🇿', 'Paraguay': '🇵🇾',
+    'Sweden': '🇸🇪', 'Czech Republic': '🇨🇿', 'Paraguay': '🇵🇾',
     'Scotland': '🏴󠁧󠁢󠁳󠁣󠁴󠁿', 'Tunisia': '🇹🇳', 'DR Congo': '🇨🇩',
     'Uzbekistan': '🇺🇿', 'Qatar': '🇶🇦', 'Iraq': '🇮🇶',
     'South Africa': '🇿🇦', 'Saudi Arabia': '🇸🇦', 'Jordan': '🇯🇴',
     'Bosnia and Herzegovina': '🇧🇦', 'Cape Verde': '🇨🇻',
-    'Ghana': '🇬🇭', 'Curacao': '🇨🇼', 'Haiti': '🇭🇹',
+    'Ghana': '🇬🇭', 'Curaçao': '🇨🇼', 'Haiti': '🇭🇹',
     'New Zealand': '🇳🇿',
 }
 
@@ -70,11 +70,11 @@ fifa_rankings = {
     'Japan': 18, 'Switzerland': 19, 'Iran': 20, 'Turkey': 22,
     'Ecuador': 23, 'Austria': 24, 'South Korea': 25, 'Australia': 27,
     'Algeria': 28, 'Egypt': 29, 'Canada': 30, 'Norway': 31,
-    'Ivory Coast': 33, 'Panama': 34, 'Sweden': 38, 'Czechia': 40,
+    'Ivory Coast': 33, 'Panama': 34, 'Sweden': 38, 'Czech Republic': 40,
     'Paraguay': 41, 'Scotland': 42, 'Tunisia': 45, 'DR Congo': 46,
     'Uzbekistan': 50, 'Qatar': 56, 'Iraq': 57, 'South Africa': 60,
     'Saudi Arabia': 61, 'Jordan': 63, 'Bosnia and Herzegovina': 64,
-    'Cape Verde': 67, 'Ghana': 73, 'Curacao': 82, 'Haiti': 83,
+    'Cape Verde': 67, 'Ghana': 73, 'Curaçao': 82, 'Haiti': 83,
     'New Zealand': 85
 }
 
@@ -87,7 +87,7 @@ continent_map = {
     'Belgium': 'Europe', 'Croatia': 'Europe', 'Switzerland': 'Europe',
     'Denmark': 'Europe', 'Norway': 'Europe', 'Austria': 'Europe',
     'Sweden': 'Europe', 'Scotland': 'Europe', 'Turkey': 'Europe',
-    'Serbia': 'Europe', 'Ukraine': 'Europe', 'Czechia': 'Europe',
+    'Serbia': 'Europe', 'Ukraine': 'Europe', 'Czech Republic': 'Europe',
     'Bosnia and Herzegovina': 'Europe', 'Italy': 'Europe',
     'Morocco': 'Africa', 'Senegal': 'Africa', 'Ghana': 'Africa',
     'Cameroon': 'Africa', 'Ivory Coast': 'Africa', 'Tunisia': 'Africa',
@@ -98,7 +98,7 @@ continent_map = {
     'Iraq': 'Asia', 'Jordan': 'Asia', 'Uzbekistan': 'Asia',
     'United States': 'CONCACAF', 'Mexico': 'CONCACAF',
     'Canada': 'CONCACAF', 'Costa Rica': 'CONCACAF',
-    'Panama': 'CONCACAF', 'Haiti': 'CONCACAF', 'Curacao': 'CONCACAF',
+    'Panama': 'CONCACAF', 'Haiti': 'CONCACAF', 'Curaçao': 'CONCACAF',
     'New Zealand': 'Oceania',
 }
 
@@ -122,7 +122,7 @@ squad_fatigue = {
     'Canada': 0.52, 'Cape Verde': 0.52, 'Egypt': 0.53,
     'Tunisia': 0.54, 'Paraguay': 0.50, 'United States': 0.50,
     'Panama': 0.49, 'DR Congo': 0.49, 'Iran': 0.48,
-    'Curacao': 0.48, 'Saudi Arabia': 0.46, 'Haiti': 0.46,
+    'Curaçao': 0.48, 'Saudi Arabia': 0.46, 'Haiti': 0.46,
     'South Africa': 0.45, 'Iraq': 0.45, 'Qatar': 0.44,
     'Jordan': 0.44, 'New Zealand': 0.43, 'Scotland': 0.67,
     'Switzerland': 0.67,

@@ -402,26 +402,44 @@ if simulate_btn:
         cols = st.columns(3)
 
         for col, gname in zip(cols, row_groups):
-            with col:
-                st.markdown(f"**Group {gname}**")
-                table = sim['group_tables'][gname]
+    with col:
+        st.markdown(f"**Group {gname}**")
+        table = sim['group_tables'][gname]
 
-                for row in table:
-                    if row.get('third_qualified'):
-                        badge = "🟡"
-                    elif row['advanced']:
-                        badge = "🟢"
-                    else:
-                        badge = "🔴"
+        for row in table:
+            if row.get('third_qualified'):
+                badge = "🟡"
+            elif row['advanced']:
+                badge = "🟢"
+            else:
+                badge = "🔴"
+            st.markdown(
+                f"{badge} {row['flag']} **{row['team']}** "
+                f"· {row['pts']}pts "
+                f"· {row['w']}W {row['d']}D {row['l']}L "
+                f"· GD {row['gd']:+d}",
+                unsafe_allow_html=False
+            )
 
-                    st.markdown(
-                        f"{badge} {row['flag']} **{row['team']}** "
-                        f"· {row['pts']}pts "
-                        f"· {row['w']}W {row['d']}D {row['l']}L "
-                        f"· GD {row['gd']:+d}",
-                        unsafe_allow_html=False
-                    )
-                st.markdown("")
+        with st.expander("📋 Match results"):
+            for result in sim['group_results'][gname]:
+                home = result['home']
+                away = result['away']
+                hs = result['home_score']
+                as_ = result['away_score']
+                fh = get_flag(home)
+                fa = get_flag(away)
+                if hs > as_:
+                    line = (f"**{fh} {home} {hs}**"
+                            f"–{as_} {fa} {away}")
+                elif as_ > hs:
+                    line = (f"{fh} {home} {hs}"
+                            f"–**{as_} {fa} {away}**")
+                else:
+                    line = (f"{fh} {home} "
+                            f"{hs}–{as_} {fa} {away}")
+                st.markdown(line)
+        st.markdown("")
 
     st.caption("🟢 Qualified · 🟡 Qualified as best 3rd · "
                "🔴 Eliminated")

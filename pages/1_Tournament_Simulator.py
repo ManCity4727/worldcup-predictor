@@ -130,9 +130,9 @@ groups = {
     'G': ['Belgium', 'Egypt', 'Iran', 'New Zealand'],
     'H': ['Spain', 'Uruguay', 'Cape Verde', 'Saudi Arabia'],
     'I': ['France', 'Norway', 'Senegal', 'Iraq'],
-    'J': ['Argentina', 'Colombia', 'Portugal', 'Jordan'],
+    'J': ['Argentina', 'Jordan', 'Algeria', 'Austria'],
     'K': ['England', 'Croatia', 'Panama', 'Ghana'],
-    'L': ['Algeria', 'Austria', 'DR Congo', 'Uzbekistan'],
+    'L': ['Colombia', 'Portugal', 'DR Congo', 'Uzbekistan'],
 }
 
 def get_lambda(team_a, team_b):
